@@ -33,6 +33,13 @@ afterEach(() => {
 });
 
 describe("install block", () => {
+  it("shell block resolves local void before PATH", () => {
+    const bash = getInstallTargets().find((t) => t.label === "bash");
+    expect(bash?.block).toContain("_void_jingle_void_bin");
+    expect(bash?.block).toContain("node_modules/.bin/void");
+    expect(bash?.block).toContain("whence -p void");
+  });
+
   it("strips marked block exactly", () => {
     const block = `${INSTALL_BEGIN_MARKER}\necho hi\n${INSTALL_END_MARKER}`;
     const content = `# before\n${block}\n# after\n`;

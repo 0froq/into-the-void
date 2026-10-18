@@ -1,14 +1,53 @@
 import { spawn } from "node:child_process";
 import { loadResolvedConfig } from "./config.js";
 import { onDeployFailure, onDeploySuccess } from "./onDeploySuccess.js";
+import { resolveVoidBinary, voidNotFoundMessage } from "./resolveVoid.js";
 
-export async function runVoidDeploy(args: string[]): Promise<number> {
+export interface RunVoidDeployOptions {
+  dryRun?: boolean;
+}
+
+function successContext(cwd: string, silence?: { ignoreNonTTY?: boolean }) {
+  return {
+    cwd,
+    env: process.env,
+    isTTY: Boolean(process.stdout.isTTY),
+    config: loadResolvedConfig(cwd),
+    silence,
+  };
+}
+
+export async function runPlayJingle(): Promise<number> {
   const cwd = process.cwd();
+  await onDeploySuccess(successContext(cwd));
+  return 0;
+}
+
+export async function runVoidDeploy(
+  args: string[],
+  options: RunVoidDeployOptions = {},
+): Promise<number> {
+  const cwd = process.cwd();
+
+  if (options.dryRun) {
+    await onDeploySuccess(
+      successContext(cwd, { ignoreNonTTY: true }),
+    );
+    return 0;
+  }
+
+  const voidBin = resolveVoidBinary(cwd, process.env);
+
+  if (!voidBin) {
+    console.error(voidNotFoundMessage());
+    return 127;
+  }
+
   const config = loadResolvedConfig(cwd);
   const isTTY = Boolean(process.stdout.isTTY);
 
   const exitCode = await new Promise<number>((resolve) => {
-    const child = spawn("void", ["deploy", ...args], {
+    const child = spawn(voidBin, ["deploy", ...args], {
       stdio: "inherit",
       shell: false,
     });

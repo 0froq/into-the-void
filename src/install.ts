@@ -9,13 +9,44 @@ export interface InstallTarget {
   block: string;
 }
 
+function shellResolveHelper(): string {
+  return `_void_jingle_void_bin() {
+  local dir="$PWD"
+  while [[ -n "$dir" && "$dir" != "/" ]]; do
+    if [[ -x "$dir/node_modules/.bin/void" ]]; then
+      echo "$dir/node_modules/.bin/void"
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+  local p=""
+  if [[ -n "\${ZSH_VERSION:-}" ]]; then
+    p="$(whence -p void 2>/dev/null || true)"
+  else
+    p="$(type -P void 2>/dev/null || true)"
+  fi
+  if [[ -n "$p" && -x "$p" ]]; then
+    echo "$p"
+    return 0
+  fi
+  return 1
+}`;
+}
+
 function shellBlock(): string {
   return `${INSTALL_BEGIN_MARKER}
+${shellResolveHelper()}
 void() {
   if [[ "\${1:-}" == "deploy" ]]; then
     command void-jingle deploy "\${@:2}"
+    return $?
+  fi
+  local bin
+  if bin="$(_void_jingle_void_bin)"; then
+    "$bin" "$@"
   else
-    command void "$@"
+    echo "void-jingle: could not find the void CLI. Install it in this project (e.g. pnpm add -D void) or ensure \\\`void\\\` is on your PATH." >&2
+    return 127
   fi
 }
 ${INSTALL_END_MARKER}
@@ -24,11 +55,35 @@ ${INSTALL_END_MARKER}
 
 function fishBlock(): string {
   return `${INSTALL_BEGIN_MARKER}
+function _void_jingle_void_bin
+  set -l dir $PWD
+  while test -n "$dir" -a "$dir" != "/"
+    if test -x "$dir/node_modules/.bin/void"
+      echo "$dir/node_modules/.bin/void"
+      return 0
+    end
+    set dir (dirname $dir)
+  end
+  for p in $PATH
+    if test -x "$p/void"
+      echo "$p/void"
+      return 0
+    end
+  end
+  return 1
+end
 function void
   if test (count $argv) -ge 1 -a $argv[1] = deploy
     command void-jingle deploy $argv[2..]
+    return $status
   else
-    command void $argv
+    set -l bin (_void_jingle_void_bin)
+    if test $status -eq 0 -a -n "$bin"
+      command $bin $argv
+    else
+      echo "void-jingle: could not find the void CLI. Install it in this project (e.g. pnpm add -D void) or ensure \\\`void\\\` is on your PATH." >&2
+      return 127
+    end
   end
 end
 ${INSTALL_END_MARKER}
