@@ -1,5 +1,5 @@
 {
-  "name": "void-jingle",
+  "name": "into-the-void",
   "version": "0.1.0",
   "description": "Play a jingle and print lyrics after a successful void deploy",
   "type": "module",
@@ -7,6 +7,7 @@
     "node": ">=22"
   },
   "bin": {
+    "into-the-void": "./dist/cli.js",
     "void-jingle": "./dist/cli.js"
   },
   "exports": {
@@ -21,20 +22,28 @@
     "assets"
   ],
   "scripts": {
-    "deploy": "void-jingle deploy",
+    "deploy": "into-the-void deploy",
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm run build && pnpm run test"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0froq/into-the-void.git"
+  },
+  "homepage": "https://github.com/0froq/into-the-void#readme",
+  "bugs": "https://github.com/0froq/into-the-void/issues",
   "keywords": [
     "void",
+    "voidzero",
     "deploy",
     "jingle",
-    "cli"
+    "cli",
+    "into-the-void"
   ],
   "author": "froQ",
   "license": "MIT",

@@ -1,4 +1,6 @@
-export interface VoidJingleConfig {
+import type { SilenceOptions } from "./silence.js";
+
+export interface IntoTheVoidConfig {
   audio?: string;
   lyrics?: string;
   lrc?: string;
@@ -6,7 +8,8 @@ export interface VoidJingleConfig {
   failureAudio?: string;
 }
 
-import type { SilenceOptions } from "./silence.js";
+/** @deprecated Use {@link IntoTheVoidConfig} */
+export type VoidJingleConfig = IntoTheVoidConfig;
 
 export interface DeploySuccessContext {
   cwd: string;

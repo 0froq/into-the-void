@@ -1,94 +1,90 @@
-# void-jingle
+# into-the-void
 
 Play a short jingle and print lyrics after a successful [`void deploy`](https://github.com/void-hq/void) (Void deploy CLI from npm package `void`, voidzero-dev).
 
 ## Install
 
 ```bash
-pnpm add -g void-jingle
-# or: npm install -g void-jingle
+pnpm add -D into-the-void
 ```
 
 Requires **Node 22+**. The `void` CLI is usually a **project devDependency** (`pnpm add -D void`), not a global install.
 
+Try the jingle without deploying:
+
+```bash
+npx into-the-void play
+```
+
 ## Usage
 
-### Explicit wrapper
-
-```bash
-void-jingle deploy [args...]
-```
-
-Runs `void deploy` with inherited stdio, forwards the exit code, and on **exit 0** plays audio and prints lyrics (timed if an `.lrc` file is configured). On failure, stays silent unless `playOnFailure` is enabled in config.
-
-**Preview without deploying:**
-
-```bash
-void-jingle deploy --dry-run
-```
-
-Strips `--dry-run`, does **not** invoke `void`, simulates success (exit 0), and plays the jingle + lyrics. Still respects `CI` and `VOID_JINGLE=0`, but ignores the non-TTY silence rule so you can pipe or script a preview.
-
-**Play only:**
-
-```bash
-void-jingle play
-```
-
-Plays configured audio and lyrics with no deploy.
-
 ### Project script (recommended)
-
-In your app `package.json`:
 
 ```json
 {
   "devDependencies": {
     "void": "^…",
-    "void-jingle": "^0.1.0"
+    "into-the-void": "^0.1.0"
   },
   "scripts": {
-    "deploy": "void-jingle deploy"
+    "deploy": "into-the-void deploy"
   }
 }
 ```
 
-Then:
-
 ```bash
 pnpm deploy
-# or: npm run deploy
 ```
 
-`void-jingle` resolves `void` by walking up from the current directory for `node_modules/.bin/void`, then falls back to `void` on your `PATH`.
+### Explicit CLI
+
+```bash
+into-the-void deploy [args...]
+```
+
+Runs `void deploy` with inherited stdio, forwards the exit code, and on **exit 0** plays audio and prints lyrics (timed if an `.lrc` file is configured).
+
+**Preview without deploying:**
+
+```bash
+into-the-void deploy --dry-run
+```
+
+**Play only:**
+
+```bash
+into-the-void play
+```
+
+`into-the-void` resolves `void` by walking up from the current directory for `node_modules/.bin/void`, then falls back to `void` on your `PATH`.
 
 `pnpm void deploy` and `npx void deploy` run the `void` binary directly (no jingle) unless you use the script above or the shell hook.
+
+The `void-jingle` command name is a deprecated alias for the same CLI.
 
 ### Transparent shell hook
 
 ```bash
-void-jingle install
+into-the-void install
 ```
 
-Adds a marked block to `~/.zshrc`, `~/.bashrc`, and Fish (`~/.config/fish/functions/void.fish`). The `void` **function** works even when `void` is only installed locally: `void deploy` goes through `void-jingle`; other subcommands run the resolved local or global `void` binary.
+Adds a marked block to `~/.zshrc`, `~/.bashrc`, and Fish (`~/.config/fish/functions/void.fish`). Migrates away from legacy `void-jingle` install blocks. `void deploy` goes through `into-the-void`; other subcommands use the resolved local or global `void` binary.
 
 ```bash
-void-jingle uninstall
+into-the-void uninstall
 ```
 
-Supports `--dry-run` on install/uninstall. Idempotent.
-
-Reload your shell after install (e.g. `source ~/.zshrc`).
+Removes current and legacy install blocks. Supports `--dry-run`. Idempotent.
 
 ## Configuration
 
 Priority (highest wins):
 
-1. `~/.config/void-jingle/config.json`
-2. `package.json` → `"voidJingle"` field
+1. `~/.config/into-the-void/config.json` (legacy: `~/.config/void-jingle/config.json`)
+2. `package.json` → `"intoTheVoid"` (legacy: `"voidJingle"`)
 3. Bundled defaults in `assets/`
 
-Example `~/.config/void-jingle/config.json`:
+Example `~/.config/into-the-void/config.json`:
 
 ```json
 {
@@ -100,22 +96,19 @@ Example `~/.config/void-jingle/config.json`:
 }
 ```
 
-Paths may be absolute or relative to the current working directory when deploy runs.
-
 ## Environment
 
-| Variable        | Effect |
-|-----------------|--------|
-| `CI`            | Disable jingle and lyrics |
-| `VOID_JINGLE=0` | Disable jingle and lyrics |
-| (no TTY)        | Disable jingle and lyrics (`deploy --dry-run` ignores non-TTY only) |
-
-Playback uses `afplay` (macOS), `paplay` / `aplay` / `ffplay` (Linux), or PowerShell on Windows. Playback failures never fail the deploy.
+| Variable | Effect |
+|----------|--------|
+| `CI` | Disable jingle and lyrics |
+| `INTO_THE_VOID=0` | Disable jingle and lyrics |
+| `VOID_JINGLE=0` | Same as `INTO_THE_VOID=0` (legacy) |
+| (no TTY) | Disable jingle (`deploy --dry-run` ignores non-TTY only) |
 
 ## Plugin-ready API
 
 ```ts
-import { onDeploySuccess } from "void-jingle/on-deploy-success";
+import { onDeploySuccess } from "into-the-void/on-deploy-success";
 ```
 
 ## Development

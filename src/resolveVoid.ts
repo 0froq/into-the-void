@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { PACKAGE_NAME } from "./constants.js";
 
 const VOID_BIN_NAME = "void";
 
@@ -79,7 +80,7 @@ export function resolveVoidBinary(
 
 export function voidNotFoundMessage(): string {
   return (
-    "void-jingle: could not find the void CLI.\n" +
+    `${PACKAGE_NAME}: could not find the void CLI.\n` +
     "Install it in this project (e.g. pnpm add -D void) or ensure `void` is available on your PATH."
   );
 }

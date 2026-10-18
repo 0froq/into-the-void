@@ -1,7 +1,12 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { INSTALL_BEGIN_MARKER, INSTALL_END_MARKER } from "./constants.js";
+import {
+  INSTALL_BEGIN_MARKER,
+  INSTALL_END_MARKER,
+  INSTALL_MARKER_PAIRS,
+  PACKAGE_NAME,
+} from "./constants.js";
 
 export interface InstallTarget {
   label: string;
@@ -10,7 +15,7 @@ export interface InstallTarget {
 }
 
 function shellResolveHelper(): string {
-  return `_void_jingle_void_bin() {
+  return `_into_the_void_void_bin() {
   local dir="$PWD"
   while [[ -n "$dir" && "$dir" != "/" ]]; do
     if [[ -x "$dir/node_modules/.bin/void" ]]; then
@@ -38,14 +43,14 @@ function shellBlock(): string {
 ${shellResolveHelper()}
 void() {
   if [[ "\${1:-}" == "deploy" ]]; then
-    command void-jingle deploy "\${@:2}"
+    command ${PACKAGE_NAME} deploy "\${@:2}"
     return $?
   fi
   local bin
-  if bin="$(_void_jingle_void_bin)"; then
+  if bin="$(_into_the_void_void_bin)"; then
     "$bin" "$@"
   else
-    echo "void-jingle: could not find the void CLI. Install it in this project (e.g. pnpm add -D void) or ensure \\\`void\\\` is on your PATH." >&2
+    echo "${PACKAGE_NAME}: could not find the void CLI. Install it in this project (e.g. pnpm add -D void) or ensure \\\`void\\\` is on your PATH." >&2
     return 127
   fi
 }
@@ -55,7 +60,7 @@ ${INSTALL_END_MARKER}
 
 function fishBlock(): string {
   return `${INSTALL_BEGIN_MARKER}
-function _void_jingle_void_bin
+function _into_the_void_void_bin
   set -l dir $PWD
   while test -n "$dir" -a "$dir" != "/"
     if test -x "$dir/node_modules/.bin/void"
@@ -74,14 +79,14 @@ function _void_jingle_void_bin
 end
 function void
   if test (count $argv) -ge 1 -a $argv[1] = deploy
-    command void-jingle deploy $argv[2..]
+    command ${PACKAGE_NAME} deploy $argv[2..]
     return $status
   else
-    set -l bin (_void_jingle_void_bin)
+    set -l bin (_into_the_void_void_bin)
     if test $status -eq 0 -a -n "$bin"
       command $bin $argv
     else
-      echo "void-jingle: could not find the void CLI. Install it in this project (e.g. pnpm add -D void) or ensure \\\`void\\\` is on your PATH." >&2
+      echo "${PACKAGE_NAME}: could not find the void CLI. Install it in this project (e.g. pnpm add -D void) or ensure \\\`void\\\` is on your PATH." >&2
       return 127
     end
   end
@@ -104,17 +109,28 @@ export function getInstallTargets(): InstallTarget[] {
   ];
 }
 
-export function stripVoidJingleBlock(content: string): string {
-  const begin = content.indexOf(INSTALL_BEGIN_MARKER);
-  if (begin === -1) {
+function stripMarkerPair(content: string, begin: string, end: string): string {
+  const beginIndex = content.indexOf(begin);
+  if (beginIndex === -1) {
     return content;
   }
-  const end = content.indexOf(INSTALL_END_MARKER, begin);
-  if (end === -1) {
+  const endIndex = content.indexOf(end, beginIndex);
+  if (endIndex === -1) {
     return content;
   }
-  const afterEnd = end + INSTALL_END_MARKER.length;
-  let result = content.slice(0, begin) + content.slice(afterEnd);
+  const afterEnd = endIndex + end.length;
+  return content.slice(0, beginIndex) + content.slice(afterEnd);
+}
+
+export function stripInstallBlock(content: string): string {
+  let result = content;
+  for (const [begin, end] of INSTALL_MARKER_PAIRS) {
+    let next = stripMarkerPair(result, begin, end);
+    while (next !== result) {
+      result = next;
+      next = stripMarkerPair(result, begin, end);
+    }
+  }
   result = result.replace(/\n{3,}/g, "\n\n");
   if (result.endsWith("\n\n")) {
     result = result.slice(0, -1);
@@ -122,15 +138,20 @@ export function stripVoidJingleBlock(content: string): string {
   return result;
 }
 
-export function hasVoidJingleBlock(content: string): boolean {
-  return (
-    content.includes(INSTALL_BEGIN_MARKER) &&
-    content.includes(INSTALL_END_MARKER)
+/** @deprecated Use {@link stripInstallBlock} */
+export const stripVoidJingleBlock = stripInstallBlock;
+
+export function hasInstallBlock(content: string): boolean {
+  return INSTALL_MARKER_PAIRS.some(
+    ([begin, end]) => content.includes(begin) && content.includes(end),
   );
 }
 
+/** @deprecated Use {@link hasInstallBlock} */
+export const hasVoidJingleBlock = hasInstallBlock;
+
 export function applyInstallBlock(content: string, block: string): string {
-  const stripped = stripVoidJingleBlock(content);
+  const stripped = stripInstallBlock(content);
   const trimmed = stripped.replace(/\s+$/, "");
   const separator = trimmed.length === 0 ? "" : "\n\n";
   return `${trimmed}${separator}${block}\n`;
@@ -203,7 +224,7 @@ export function uninstallShellIntegration(dryRun: boolean): InstallResult[] {
     }
 
     const prior = fs.readFileSync(target.filePath, "utf8");
-    if (!hasVoidJingleBlock(prior)) {
+    if (!hasInstallBlock(prior)) {
       results.push({
         label: target.label,
         filePath: target.filePath,
@@ -213,7 +234,7 @@ export function uninstallShellIntegration(dryRun: boolean): InstallResult[] {
       continue;
     }
 
-    const next = stripVoidJingleBlock(prior);
+    const next = stripInstallBlock(prior);
 
     if (dryRun) {
       results.push({

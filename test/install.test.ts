@@ -5,18 +5,23 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   applyInstallBlock,
   getInstallTargets,
-  hasVoidJingleBlock,
+  hasInstallBlock,
   installShellIntegration,
-  stripVoidJingleBlock,
+  stripInstallBlock,
   uninstallShellIntegration,
 } from "../src/install.js";
-import { INSTALL_BEGIN_MARKER, INSTALL_END_MARKER } from "../src/constants.js";
+import {
+  INSTALL_BEGIN_MARKER,
+  INSTALL_END_MARKER,
+  LEGACY_INSTALL_BEGIN_MARKER,
+  LEGACY_INSTALL_END_MARKER,
+} from "../src/constants.js";
 
 const originalHome = os.homedir();
 let tmpHome: string | null = null;
 
 function useTempHome(): string {
-  tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "void-jingle-home-"));
+  tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "into-the-void-home-"));
   process.env.HOME = tmpHome;
   if (process.platform !== "win32") {
     process.env.USERPROFILE = tmpHome;
@@ -35,7 +40,8 @@ afterEach(() => {
 describe("install block", () => {
   it("shell block resolves local void before PATH", () => {
     const bash = getInstallTargets().find((t) => t.label === "bash");
-    expect(bash?.block).toContain("_void_jingle_void_bin");
+    expect(bash?.block).toContain("_into_the_void_void_bin");
+    expect(bash?.block).toContain("command into-the-void deploy");
     expect(bash?.block).toContain("node_modules/.bin/void");
     expect(bash?.block).toContain("whence -p void");
   });
@@ -43,10 +49,29 @@ describe("install block", () => {
   it("strips marked block exactly", () => {
     const block = `${INSTALL_BEGIN_MARKER}\necho hi\n${INSTALL_END_MARKER}`;
     const content = `# before\n${block}\n# after\n`;
-    const stripped = stripVoidJingleBlock(content);
+    const stripped = stripInstallBlock(content);
     expect(stripped).toContain("# before");
     expect(stripped).toContain("# after");
     expect(stripped).not.toContain(INSTALL_BEGIN_MARKER);
+  });
+
+  it("strips legacy void-jingle blocks on uninstall", () => {
+    const legacy = `${LEGACY_INSTALL_BEGIN_MARKER}\nold\n${LEGACY_INSTALL_END_MARKER}`;
+    const stripped = stripInstallBlock(`# x\n${legacy}\n`);
+    expect(stripped).not.toContain(LEGACY_INSTALL_BEGIN_MARKER);
+    expect(stripped).toContain("# x");
+  });
+
+  it("install migrates legacy block to into-the-void", () => {
+    useTempHome();
+    const bashPath = getInstallTargets().find((t) => t.label === "bash")!.filePath;
+    const legacy = `${LEGACY_INSTALL_BEGIN_MARKER}\nlegacy\n${LEGACY_INSTALL_END_MARKER}\n`;
+    fs.writeFileSync(bashPath, legacy);
+    installShellIntegration(false);
+    const content = fs.readFileSync(bashPath, "utf8");
+    expect(content).toContain(INSTALL_BEGIN_MARKER);
+    expect(content).not.toContain(LEGACY_INSTALL_BEGIN_MARKER);
+    expect(content).toContain("into-the-void deploy");
   });
 
   it("install and uninstall are idempotent", () => {
@@ -58,7 +83,7 @@ describe("install block", () => {
 
     for (const t of getInstallTargets()) {
       expect(fs.existsSync(t.filePath)).toBe(true);
-      expect(hasVoidJingleBlock(fs.readFileSync(t.filePath, "utf8"))).toBe(true);
+      expect(hasInstallBlock(fs.readFileSync(t.filePath, "utf8"))).toBe(true);
     }
 
     const second = installShellIntegration(false);
@@ -70,7 +95,7 @@ describe("install block", () => {
         expect(fs.existsSync(t.filePath)).toBe(false);
       } else {
         const content = fs.readFileSync(t.filePath, "utf8");
-        expect(hasVoidJingleBlock(content)).toBe(false);
+        expect(hasInstallBlock(content)).toBe(false);
       }
     }
 

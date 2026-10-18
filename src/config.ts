@@ -1,10 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ResolvedConfig, VoidJingleConfig } from "./types.js";
+import type { IntoTheVoidConfig, ResolvedConfig } from "./types.js";
+import {
+  LEGACY_PACKAGE_JSON_CONFIG_KEY,
+  PACKAGE_JSON_CONFIG_KEY,
+} from "./constants.js";
 import {
   bundledAssetsDir,
   resolvePathMaybe,
-  userConfigPath,
+  userConfigCandidates,
 } from "./paths.js";
 
 const DEFAULT_AUDIO = "default.wav";
@@ -20,29 +24,36 @@ function readJsonFile(filePath: string): Record<string, unknown> | null {
   }
 }
 
-function loadUserConfig(): VoidJingleConfig | null {
-  const p = userConfigPath();
-  const data = readJsonFile(p);
+function loadUserConfig(): IntoTheVoidConfig | null {
+  for (const configPath of userConfigCandidates()) {
+    const data = readJsonFile(configPath);
+    if (data) {
+      return data as IntoTheVoidConfig;
+    }
+  }
+  return null;
+}
+
+function loadPackageConfig(cwd: string): IntoTheVoidConfig | null {
+  const pkgPath = path.join(cwd, "package.json");
+  const data = readJsonFile(pkgPath);
   if (!data) {
     return null;
   }
-  return data as VoidJingleConfig;
-}
-
-function loadPackageConfig(cwd: string): VoidJingleConfig | null {
-  const pkgPath = path.join(cwd, "package.json");
-  const data = readJsonFile(pkgPath);
-  if (!data || !data.voidJingle) {
-    return null;
+  if (data[PACKAGE_JSON_CONFIG_KEY]) {
+    return data[PACKAGE_JSON_CONFIG_KEY] as IntoTheVoidConfig;
   }
-  return data.voidJingle as VoidJingleConfig;
+  if (data[LEGACY_PACKAGE_JSON_CONFIG_KEY]) {
+    return data[LEGACY_PACKAGE_JSON_CONFIG_KEY] as IntoTheVoidConfig;
+  }
+  return null;
 }
 
 function mergeConfig(
-  base: VoidJingleConfig,
-  ...overrides: (VoidJingleConfig | null)[]
-): VoidJingleConfig {
-  const out: VoidJingleConfig = { ...base };
+  base: IntoTheVoidConfig,
+  ...overrides: (IntoTheVoidConfig | null)[]
+): IntoTheVoidConfig {
+  const out: IntoTheVoidConfig = { ...base };
   for (const o of overrides) {
     if (!o) {
       continue;
@@ -66,7 +77,7 @@ function mergeConfig(
   return out;
 }
 
-function bundledDefaults(): VoidJingleConfig {
+function bundledDefaults(): IntoTheVoidConfig {
   const assets = bundledAssetsDir();
   return {
     audio: path.join(assets, DEFAULT_AUDIO),

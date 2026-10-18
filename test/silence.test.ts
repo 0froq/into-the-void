@@ -7,7 +7,8 @@ describe("shouldStaySilent", () => {
     expect(shouldStaySilent({ CI: "1" }, true)).toBe(true);
   });
 
-  it("is silent when VOID_JINGLE=0", () => {
+  it("is silent when INTO_THE_VOID=0 or legacy VOID_JINGLE=0", () => {
+    expect(shouldStaySilent({ INTO_THE_VOID: "0" }, true)).toBe(true);
     expect(shouldStaySilent({ VOID_JINGLE: "0" }, true)).toBe(true);
   });
 

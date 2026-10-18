@@ -1,3 +1,4 @@
+import { PACKAGE_NAME } from "./constants.js";
 import { runPlayJingle, runVoidDeploy } from "./wrapper.js";
 import {
   installShellIntegration,
@@ -5,26 +6,26 @@ import {
 } from "./install.js";
 
 function printHelp(): void {
-  console.log(`void-jingle — celebrate successful void deploys
+  console.log(`${PACKAGE_NAME} — celebrate successful void deploys
 
 Usage:
-  void-jingle deploy [...args]       Run void deploy, then jingle on success
-  void-jingle deploy --dry-run [...]  Skip void; simulate success and play jingle
-  void-jingle play                    Play jingle and lyrics (no deploy)
-  void-jingle install [--dry-run]     Add shell wrapper to route void deploy
-  void-jingle uninstall [--dry-run]   Remove shell wrapper block
-  void-jingle help
+  ${PACKAGE_NAME} deploy [...args]       Run void deploy, then jingle on success
+  ${PACKAGE_NAME} deploy --dry-run [...]  Skip void; simulate success and play jingle
+  ${PACKAGE_NAME} play                    Play jingle and lyrics (no deploy)
+  ${PACKAGE_NAME} install [--dry-run]     Add shell wrapper to route void deploy
+  ${PACKAGE_NAME} uninstall [--dry-run]   Remove shell wrapper block
+  ${PACKAGE_NAME} help
 
 void is resolved by walking up from cwd for node_modules/.bin/void, then PATH.
 
 Environment:
-  CI              When set, jingle is disabled
-  VOID_JINGLE=0   Disable jingle
-  (no TTY)        Disable jingle (except deploy --dry-run ignores non-TTY)
+  CI                 When set, jingle is disabled
+  INTO_THE_VOID=0    Disable jingle (VOID_JINGLE=0 also honored)
+  (no TTY)           Disable jingle (except deploy --dry-run ignores non-TTY)
 
 Config:
-  ~/.config/void-jingle/config.json
-  package.json "voidJingle" field (user config wins over package.json)
+  ~/.config/into-the-void/config.json (legacy: ~/.config/void-jingle/config.json)
+  package.json "intoTheVoid" field (legacy: "voidJingle"; user config wins)
 `);
 }
 
