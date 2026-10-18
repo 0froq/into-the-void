@@ -1,0 +1,2 @@
+🎵 Deploy complete! 🎵
+(Replace assets/default.wav and this file in your config.)
