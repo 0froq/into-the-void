@@ -18,4 +18,9 @@ describe("shouldStaySilent", () => {
   it("plays when interactive and no suppressors", () => {
     expect(shouldStaySilent({}, true)).toBe(false);
   });
+
+  it("allows non-TTY when ignoreNonTTY is set", () => {
+    expect(shouldStaySilent({}, false, { ignoreNonTTY: true })).toBe(false);
+    expect(shouldStaySilent({ CI: "1" }, false, { ignoreNonTTY: true })).toBe(true);
+  });
 });

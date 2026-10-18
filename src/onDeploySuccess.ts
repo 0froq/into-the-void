@@ -4,7 +4,7 @@ import { playAudio } from "./audio.js";
 import { printLyrics } from "./lyrics.js";
 
 export async function onDeploySuccess(ctx: DeploySuccessContext): Promise<void> {
-  if (shouldStaySilent(ctx.env, ctx.isTTY)) {
+  if (shouldStaySilent(ctx.env, ctx.isTTY, ctx.silence)) {
     return;
   }
 
@@ -17,7 +17,7 @@ export async function onDeploySuccess(ctx: DeploySuccessContext): Promise<void> 
 }
 
 export async function onDeployFailure(ctx: DeploySuccessContext): Promise<void> {
-  if (shouldStaySilent(ctx.env, ctx.isTTY)) {
+  if (shouldStaySilent(ctx.env, ctx.isTTY, ctx.silence)) {
     return;
   }
 

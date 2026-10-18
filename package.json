@@ -21,6 +21,7 @@
     "assets"
   ],
   "scripts": {
+    "deploy": "void-jingle deploy",
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",

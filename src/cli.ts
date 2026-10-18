@@ -1,4 +1,4 @@
-import { runVoidDeploy } from "./wrapper.js";
+import { runPlayJingle, runVoidDeploy } from "./wrapper.js";
 import {
   installShellIntegration,
   uninstallShellIntegration,
@@ -8,18 +8,23 @@ function printHelp(): void {
   console.log(`void-jingle — celebrate successful void deploys
 
 Usage:
-  void-jingle deploy [...args]   Run void deploy, then jingle on success
-  void-jingle install [--dry-run]  Add shell wrapper to route void deploy
-  void-jingle uninstall [--dry-run]  Remove shell wrapper block
+  void-jingle deploy [...args]       Run void deploy, then jingle on success
+  void-jingle deploy --dry-run [...]  Skip void; simulate success and play jingle
+  void-jingle play                    Play jingle and lyrics (no deploy)
+  void-jingle install [--dry-run]     Add shell wrapper to route void deploy
+  void-jingle uninstall [--dry-run]   Remove shell wrapper block
   void-jingle help
+
+void is resolved by walking up from cwd for node_modules/.bin/void, then PATH.
 
 Environment:
   CI              When set, jingle is disabled
   VOID_JINGLE=0   Disable jingle
+  (no TTY)        Disable jingle (except deploy --dry-run ignores non-TTY)
 
 Config:
   ~/.config/void-jingle/config.json
-  package.json "voidJingle" field (project overrides, user config wins)
+  package.json "voidJingle" field (user config wins over package.json)
 `);
 }
 
@@ -32,16 +37,21 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
-  const dryRun = argv.includes("--dry-run");
-  const filtered = argv.filter((a) => a !== "--dry-run");
-
   if (command === "deploy") {
-    const deployArgs = filtered.slice(1);
-    const code = await runVoidDeploy(deployArgs);
+    const rest = argv.slice(1);
+    const deployDryRun = rest.includes("--dry-run");
+    const deployArgs = rest.filter((a) => a !== "--dry-run");
+    const code = await runVoidDeploy(deployArgs, { dryRun: deployDryRun });
+    process.exit(code);
+  }
+
+  if (command === "play") {
+    const code = await runPlayJingle();
     process.exit(code);
   }
 
   if (command === "install") {
+    const dryRun = argv.slice(1).includes("--dry-run");
     const results = installShellIntegration(dryRun);
     for (const r of results) {
       const extra = r.message ? ` (${r.message})` : "";
@@ -51,6 +61,7 @@ async function main(): Promise<void> {
   }
 
   if (command === "uninstall") {
+    const dryRun = argv.slice(1).includes("--dry-run");
     const results = uninstallShellIntegration(dryRun);
     for (const r of results) {
       const extra = r.message ? ` (${r.message})` : "";

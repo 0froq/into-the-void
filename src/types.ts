@@ -6,11 +6,14 @@ export interface VoidJingleConfig {
   failureAudio?: string;
 }
 
+import type { SilenceOptions } from "./silence.js";
+
 export interface DeploySuccessContext {
   cwd: string;
   env: NodeJS.ProcessEnv;
   isTTY: boolean;
   config: ResolvedConfig;
+  silence?: SilenceOptions;
 }
 
 export interface ResolvedConfig {
