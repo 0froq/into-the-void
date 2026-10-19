@@ -12,8 +12,6 @@ import {
 } from "./paths.js";
 
 const DEFAULT_AUDIO = "default.wav";
-const DEFAULT_LYRICS = "default.txt";
-const DEFAULT_LRC = "default.lrc";
 
 function readJsonFile(filePath: string): Record<string, unknown> | null {
   try {
@@ -61,12 +59,6 @@ function mergeConfig(
     if (o.audio !== undefined) {
       out.audio = o.audio;
     }
-    if (o.lyrics !== undefined) {
-      out.lyrics = o.lyrics;
-    }
-    if (o.lrc !== undefined) {
-      out.lrc = o.lrc;
-    }
     if (o.playOnFailure !== undefined) {
       out.playOnFailure = o.playOnFailure;
     }
@@ -81,8 +73,6 @@ function bundledDefaults(): IntoTheVoidConfig {
   const assets = bundledAssetsDir();
   return {
     audio: path.join(assets, DEFAULT_AUDIO),
-    lyrics: path.join(assets, DEFAULT_LYRICS),
-    lrc: path.join(assets, DEFAULT_LRC),
     playOnFailure: false,
   };
 }
@@ -99,16 +89,6 @@ export function loadResolvedConfig(cwd: string): ResolvedConfig {
   const audioPath = merged.audio
     ? resolvePathMaybe(cwd, merged.audio)
     : path.join(assets, DEFAULT_AUDIO);
-  const lyricsPath = merged.lyrics
-    ? resolvePathMaybe(cwd, merged.lyrics)
-    : path.join(assets, DEFAULT_LYRICS);
-  let lrcPath: string | null = null;
-  if (merged.lrc) {
-    const resolved = resolvePathMaybe(cwd, merged.lrc);
-    if (fs.existsSync(resolved)) {
-      lrcPath = resolved;
-    }
-  }
 
   const failureAudioPath =
     merged.failureAudio && merged.playOnFailure
@@ -117,8 +97,6 @@ export function loadResolvedConfig(cwd: string): ResolvedConfig {
 
   return {
     audioPath,
-    lyricsPath,
-    lrcPath,
     playOnFailure: merged.playOnFailure ?? false,
     failureAudioPath,
   };

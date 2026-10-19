@@ -1,7 +1,7 @@
 import type { DeploySuccessContext } from "./types.js";
 import { shouldStaySilent } from "./silence.js";
 import { playAudio } from "./audio.js";
-import { printLyrics } from "./lyrics.js";
+import { printIntoTheVoid } from "./tagline.js";
 
 export async function onDeploySuccess(ctx: DeploySuccessContext): Promise<void> {
   if (shouldStaySilent(ctx.env, ctx.isTTY, ctx.silence)) {
@@ -10,10 +10,8 @@ export async function onDeploySuccess(ctx: DeploySuccessContext): Promise<void> 
 
   const { config } = ctx;
 
-  await Promise.all([
-    playAudio(config.audioPath),
-    printLyrics(config.lyricsPath, config.lrcPath),
-  ]);
+  printIntoTheVoid(ctx.env, ctx.isTTY);
+  await playAudio(config.audioPath);
 }
 
 export async function onDeployFailure(ctx: DeploySuccessContext): Promise<void> {

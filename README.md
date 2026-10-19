@@ -1,6 +1,6 @@
 # into-the-void
 
-Play a short jingle and print lyrics after a successful [`void deploy`](https://github.com/void-hq/void) (Void deploy CLI from npm package `void`, voidzero-dev).
+Play a short jingle and print **into the void** after a successful [`void deploy`](https://github.com/void-hq/void) (Void deploy CLI from npm package `void`, voidzero-dev).
 
 ## Install
 
@@ -42,7 +42,7 @@ pnpm deploy
 into-the-void deploy [args...]
 ```
 
-Runs `void deploy` with inherited stdio, forwards the exit code, and on **exit 0** plays audio and prints lyrics (timed if an `.lrc` file is configured).
+Runs `void deploy` with inherited stdio, forwards the exit code, and on **exit 0** plays the jingle and prints a styled `into the void` line once (plain text when `NO_COLOR` is set or stdout is not a TTY).
 
 **Preview without deploying:**
 
@@ -82,15 +82,13 @@ Priority (highest wins):
 
 1. `~/.config/into-the-void/config.json` (legacy: `~/.config/void-jingle/config.json`)
 2. `package.json` → `"intoTheVoid"` (legacy: `"voidJingle"`)
-3. Bundled defaults in `assets/`
+3. Bundled default jingle in `assets/default.wav`
 
 Example `~/.config/into-the-void/config.json`:
 
 ```json
 {
   "audio": "/path/to/jingle.wav",
-  "lyrics": "/path/to/lyrics.txt",
-  "lrc": "/path/to/lyrics.lrc",
   "playOnFailure": false,
   "failureAudio": "/path/to/sad.wav"
 }
@@ -100,10 +98,11 @@ Example `~/.config/into-the-void/config.json`:
 
 | Variable | Effect |
 |----------|--------|
-| `CI` | Disable jingle and lyrics |
-| `INTO_THE_VOID=0` | Disable jingle and lyrics |
+| `CI` | Disable jingle and tagline |
+| `INTO_THE_VOID=0` | Disable jingle and tagline |
 | `VOID_JINGLE=0` | Same as `INTO_THE_VOID=0` (legacy) |
-| (no TTY) | Disable jingle (`deploy --dry-run` ignores non-TTY only) |
+| `NO_COLOR` | Plain `into the void` text (no ANSI styling) |
+| (no TTY) | Plain text; no jingle (`deploy --dry-run` ignores non-TTY only) |
 
 ## Plugin-ready API
 

@@ -11,7 +11,7 @@ function printHelp(): void {
 Usage:
   ${PACKAGE_NAME} deploy [...args]       Run void deploy, then jingle on success
   ${PACKAGE_NAME} deploy --dry-run [...]  Skip void; simulate success and play jingle
-  ${PACKAGE_NAME} play                    Play jingle and lyrics (no deploy)
+  ${PACKAGE_NAME} play                    Play jingle and print tagline (no deploy)
   ${PACKAGE_NAME} install [--dry-run]     Add shell wrapper to route void deploy
   ${PACKAGE_NAME} uninstall [--dry-run]   Remove shell wrapper block
   ${PACKAGE_NAME} help

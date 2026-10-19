@@ -1,7 +1,7 @@
 {
   "name": "into-the-void",
   "version": "0.1.0",
-  "description": "Play a jingle and print lyrics after a successful void deploy",
+  "description": "Play a jingle and print into the void after a successful void deploy",
   "type": "module",
   "engines": {
     "node": ">=22"
